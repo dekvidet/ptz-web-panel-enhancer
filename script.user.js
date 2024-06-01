@@ -10,11 +10,7 @@
 // @supportURL   https://github.com/dekvidet/ptz-web-panel-enhancer
 // @updateURL    https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/script.user.js
 // @downloadURL  https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/script.user.js
-// @match        http://10.*.*/pages/main.asp
-// @match        http://172.1[6-9].*/pages/main.asp
-// @match        http://172.2[0-9].*/pages/main.asp
-// @match        http://172.3[0-1].*/pages/main.asp
-// @match        http://192.168.*.*/pages/main.asp
+// @match        http://*/pages/main.asp
 // @grant        none
 // ==/UserScript==
 const CAMERA_NUMBER_OPTION_ID_BASE = '_easyui_combobox_i1_'
@@ -34,6 +30,9 @@ let currentSpeedAmountIndex = 0
 
 setTimeout(() => {
   const mainWindow = document.getElementById('mainframe').contentWindow
+  if (!mainWindow) {
+    return
+  }
   const mainDocument = mainWindow.document
   addHelp()
 
