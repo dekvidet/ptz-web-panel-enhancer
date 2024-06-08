@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         PTZ Web Panel Enhancer
 // @namespace    https://dekvited.com
-// @version      1.0
+// @version      1.0.1
 // @description  Add style and functionality enhancement for the Minrray PTZ web panel that controls it remotely
 // @author       totymedli
 // @icon         https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/icon.png
@@ -149,12 +149,7 @@ setTimeout(() => {
       }
       case '/': {
         event.preventDefault()
-        mainDocument.getElementById(SPEED_SLIDER_ID).value = 0
-        break
-      }
-      case '*': {
-        event.preventDefault()
-        mainDocument.getElementById(SPEED_SLIDER_ID).value = 100
+        currentSpeedAmountIndex = 0
         break
       }
       case 'Shift': {
