@@ -1,8 +1,7 @@
- 
 // ==UserScript==
 // @name         PTZ Web Panel Enhancer
 // @namespace    https://dekvited.com
-// @version      1.0.1
+// @version      1.1.0
 // @description  Add style and functionality enhancement for the Minrray PTZ web panel that controls it remotely
 // @author       totymedli
 // @icon         https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/icon.png
@@ -24,9 +23,15 @@ const MOVE_DOWN_BUTTON_ID = 'ptzDown'
 const MOVE_LEFT_BUTTON_ID = 'ptzLeft'
 const MOVE_RIGHT_BUTTON_ID = 'ptzRight'
 const SPEED_AMOUNTS = [1, 10, 20, 25]
+const DELAY_BETWEEN_KEYPRESSES_IN_MS = 500
 
 let isHotSwitching = true
+let isAutoPaning = false
+let isAutoPanLoopInProgress = false
+let autoPaningInterval = null
 let currentSpeedAmountIndex = 0
+let autoPanRightTimeInMs = 2000
+let autoPanLeftTimeInMs = 2000
 
 setTimeout(() => {
   const mainWindow = document.getElementById('mainframe').contentWindow
@@ -35,6 +40,7 @@ setTimeout(() => {
   }
   const mainDocument = mainWindow.document
   addHelp()
+  addAutoPan()
 
   function changeSpeed(amount, vary) {
     const ptzSpeedelement = mainWindow.$(`#${SPEED_SLIDER_ID}`)
@@ -42,13 +48,41 @@ setTimeout(() => {
     switch (vary) {
       case '+':
         ptzSpeedelement.slider('setValue', speed + amount)
-        break;
+        break
       case '-':
         ptzSpeedelement.slider('setValue', speed - amount)
-        break;
+        break
       default:
         ptzSpeedelement.slider('setValue', amount)
     }
+  }
+
+  function dispatch(id, eventName) {
+    mainDocument.getElementById(id).dispatchEvent(new Event(eventName))
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function autoPanFor(panTimeInMs) {
+    isAutoPanLoopInProgress = true
+    if (isAutoPaning) {
+      await wait(DELAY_BETWEEN_KEYPRESSES_IN_MS)
+      dispatch(MOVE_RIGHT_BUTTON_ID, 'mousedown')
+      await wait(panTimeInMs)
+      dispatch(MOVE_RIGHT_BUTTON_ID, 'mouseup')
+    } else {
+        isAutoPanLoopInProgress = false
+        return
+    }
+    if (isAutoPaning) {
+      await wait(DELAY_BETWEEN_KEYPRESSES_IN_MS)
+      dispatch(MOVE_LEFT_BUTTON_ID, 'mousedown')
+      await wait(panTimeInMs)
+      dispatch(MOVE_LEFT_BUTTON_ID, 'mouseup')
+    }
+    isAutoPanLoopInProgress = false
   }
 
   function addHelp() {
@@ -59,6 +93,7 @@ setTimeout(() => {
             <li>0-9: Selects camera preset and moves camera to that position if hot switching is enabled.</li>
             <li>+, -: Increase/decrease camera move speed.</li>
             <li>*: Change between camera move speed of 1, 10, 20, 25.</li>
+            <li>/: Toggle auto pan mode.</li>
             <li>Shift: Toggle hot switching mode. If turned on, changing the selected preset will also move the camera to that position. Turning it off is usefull when you would like to save the current camera position to a preset without moving the camera to the choosen preset.</li>
             <li>Space: Move the camera to the current preset position. Usefull when you turned off hot switching mode.</li>
             <li>Enter: Save camera position to current preset.</li>
@@ -68,10 +103,60 @@ setTimeout(() => {
           </ul>
         </div>
       </div>`
-      mainDocument.getElementById('rightpreview').insertAdjacentHTML('beforeend', helpHtml);
+      mainDocument.getElementById('rightpreview').insertAdjacentHTML('beforeend', helpHtml)
+  }
+
+  function addAutoPan() {
+    const autoPanHtml = `
+    <td id="autoPanButtonCell">
+      <a id="autoPan" href="#" class="trackbtn autopan" title="Auto Pan"></a>
+    </td>
+    <td id="autoPanTimeCell">
+      <span>
+        <input type="number" id="autoPanLeftTime" value="2000" />ms
+      </span>
+      <span>
+        <input type="number" id="autoPanRightTime" value="2000" />ms
+      </span>
+    </td>`
+    mainDocument.querySelector('#rightpreview .ptzdiv:nth-of-type(4) tr').insertAdjacentHTML('beforeend', autoPanHtml)
+  }
+
+  async function handleAutoPan(event) {
+    if (isAutoPaning) {
+      clearInterval(autoPaningInterval)
+      autoPanButton.classList.remove('borderBlink')
+    } else {
+      autoPanButton.classList.add('borderBlink')
+      dispatch(MOVE_LEFT_BUTTON_ID, 'mousedown')
+      await wait(autoPanLeftTimeInMs)
+      dispatch(MOVE_LEFT_BUTTON_ID, 'mouseup')
+      autoPaningInterval = setInterval(async () => {
+        if (isAutoPaning && !isAutoPanLoopInProgress) {
+            console.log(autoPanLeftTimeInMs, autoPanRightTimeInMs)
+          await autoPanFor(autoPanLeftTimeInMs + autoPanRightTimeInMs)
+        }
+      }, 50)
+    }
+    isAutoPaning = !isAutoPaning
   }
 
   console.log('PTZ Web Panel Enhancer started')
+
+  const autoPanButton = mainDocument.getElementById('autoPan')
+  autoPanButton.addEventListener('click', handleAutoPan)
+
+  mainDocument.getElementById('autoPanLeftTime').addEventListener('change', event => {
+    autoPanLeftTimeInMs = parseInt(event.target.value, 10)
+  });
+  // Don't trigger preset load when entering value with number keys
+  mainDocument.getElementById('autoPanLeftTime').addEventListener('keypress', event => event.stopPropagation());
+
+  mainDocument.getElementById('autoPanRightTime').addEventListener('change', event => {
+    autoPanRightTimeInMs = parseInt(event.target.value, 10)
+  });
+  // Don't trigger preset load when entering value with number keys
+  mainDocument.getElementById('autoPanRightTime').addEventListener('keypress', event => event.stopPropagation());
 
   mainDocument.addEventListener('keypress', event => {
     if (0 <= event.key && event.key <= 9) {
@@ -167,6 +252,11 @@ setTimeout(() => {
         }
         break
       }
+      case '/': {
+        event.preventDefault()
+        handleAutoPan()
+        break
+      }
       case ' ': {
         event.preventDefault()
         if (!event.repeat) {
@@ -233,6 +323,29 @@ setTimeout(() => {
   })
 
   addGlobalStyle(`
+  @keyframes borderBlink {
+    from, to {
+      border-color: transparent
+    }
+    50% {
+      border-color: red
+    }
+  }
+
+  .borderBlink {
+    animation: borderBlink 1s step-end infinite;
+    border: 4px solid black !prevent-important;
+    box-sizing: border-box;
+  }
+
+  .divPtz.panel-body.panel-body-noheader.panel-body-noborder.layout-body {
+    min-width: 215px;
+  }
+
+  .head {
+    display: none;
+  }
+
   #rightpreview {
     display: flex;
     flex-direction: column;
@@ -246,19 +359,40 @@ setTimeout(() => {
   }
 
   #rightpreview > div:nth-child(4) tr td:nth-child(5) {
-    order: -1;
+    order: -4;
   }
 
   #rightpreview > div:nth-child(4) tr td:nth-child(2) {
-    margin-bottom: 250px;
+    order: -3;
+  }
+
+  #autoPanButtonCell {
+    order: -2;
+  }
+
+  #autoPanTimeCell {
+    order: -1;
+  }
+
+  #rightpreview > div:nth-child(4) tr td:nth-child(1) {
+    display: none;
+  }
+
+  #rightpreview > div:nth-child(4) tr td:nth-child(2)::before {
+    content: "Preset ";
+  }
+
+  #rightpreview > div:nth-child(4) tr td:nth-child(2) {
+    margin-bottom: 20px;
   }
 
   .trackbtn {
     background: none;
   }
 
-  .trackbtn.start, .trackbtn.edit, .trackbtn.delete {
+  .trackbtn.start, .trackbtn.edit, .trackbtn.delete, .trackbtn.autopan {
     width: 150px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -267,9 +401,7 @@ setTimeout(() => {
 
   .trackbtn.edit {
     background-color: yellow;
-    width: 150px;
-    height: 30px;
-    margin-bottom: 20px;
+    margin-bottom: 7px;
   }
 
   .trackbtn.edit:before {
@@ -278,8 +410,6 @@ setTimeout(() => {
 
   .trackbtn.delete {
     background-color: red;
-    width: 150px;
-    height: 30px;
   }
 
   .trackbtn.delete:before {
@@ -296,11 +426,37 @@ setTimeout(() => {
     content: 'GO';
   }
 
+  .trackbtn.autopan {
+    background-color: green;
+    opacity: 0.5;
+  }
+
+  .trackbtn.autopan:before {
+    content: 'AUTO PAN';
+  }
+
+  .trackbtn.autopan:hover {
+    opacity: 1;
+  }
+
+  #autoPanButtonCell {
+    margin-bottom: 2px;
+  }
+
+  #autoPanTimeCell {
+    margin-bottom: 3px;
+  }
+
+  #autoPanTimeCell input {
+    width: 50px;
+  }
+
   .helpBtn {
     width: 150px;
     height: 30px;
     text-align: center;
     background-color: #ddd;
+    opacity: 0.5;
   }
 
   .helpBtn:before {
@@ -309,16 +465,20 @@ setTimeout(() => {
 
   .helpBtn:hover {
     background-color: #ccc;
+    opacity: 1;
   }
 
   .helpWindow {
     visibility: hidden;
     width: 100%;
-    background-color: white;
+    height: 100%;
+    display: flex;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 1;
+    overflow-y: scroll;
+    background-color: white;
   }
 
   .helpBtn:hover .helpWindow {
@@ -335,7 +495,8 @@ setTimeout(() => {
     if (!head) { return }
     const style = mainDocument.createElement('style')
     style.type = 'text/css'
-    style.innerHTML = css.replace(/;/g, ' !important;')
+    // Everything have to be !important to take effect. Sometimes this is undesirable so we undo the replace when !prevent-important is used.
+    style.innerHTML = css.replace(/;/g, ' !important;').replace(/!prevent-important !important;/g, ';')
     head.appendChild(style)
   }
 }, 2000)
