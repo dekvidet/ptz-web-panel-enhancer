@@ -8,10 +8,12 @@ Some modifications might be necessary to the script for these untested products.
 
 ## Features
 - Improved CSS for better button colors and layout for easier mouse and touch operation.
+- Auto pan feature to continously move the camera left and right in a repeating manner with custom time delays.
 - Shortcuts for keyboard control:
   - <kbd>0</kbd>-<kbd>9</kbd>: Selects camera preset and moves camera to that position if hot switching is enabled.
   - <kbd>+</kbd>, <kbd>-</kbd>: Increase/decrease camera move speed.
   - <kbd>*</kbd>: Change between camera move speed of 1, 10, 20, 25.
+  - <kbd>/</kbd>: Toggle auto pan mode.
   - <kbd>Shift</kbd>: Toggle hot switching mode. If turned on changing the selected preset will also move the camera to that position. Turning it off is usefull when you would like to save the current camera position to a preset without moving the camera to the choosen preset.
   - <kbd>Space</kbd>: Move the camera to the current preset position. Usefull when you turned off hot switching mode.
   - <kbd>Enter</kbd>: Save camera position to current preset.
