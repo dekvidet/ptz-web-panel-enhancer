@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PTZ Web Panel Enhancer
 // @namespace    https://dekvited.com
-// @version      1.1.0
+// @version      1.2.0
 // @description  Add style and functionality enhancement for the Minrray PTZ web panel that controls it remotely
 // @author       totymedli
 // @icon         https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/icon.png
@@ -9,10 +9,20 @@
 // @supportURL   https://github.com/dekvidet/ptz-web-panel-enhancer
 // @updateURL    https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/script.user.js
 // @downloadURL  https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/script.user.js
+// @match        http://*/pages/login.asp
 // @match        http://*/pages/main.asp
 // @grant        none
 // ==/UserScript==
+
+// ============= CONFIGURATION ============= //
+const USERNAME = ''
+const PASSWORD = ''
+// ========================================= //
+
 const CAMERA_NUMBER_OPTION_ID_BASE = '_easyui_combobox_i1_'
+const LOGIN_SCREEN_ID = 'loginContent'
+const LOGIN_FORM_CREDENTIAL_FIELD_CLASSES = 'input.textbox-text.validatebox-text'
+const LOGIN_BUTTON_ID = 'login'
 const GO_TO_POSITION_BUTTON_ID = 'prerun'
 const SAVE_POSITION_BUTTON_ID = 'preset'
 const SPEED_SLIDER_ID = 'ptzSpeed'
@@ -34,6 +44,12 @@ let autoPanRightTimeInMs = 2000
 let autoPanLeftTimeInMs = 2000
 
 setTimeout(() => {
+  if (document.getElementById(LOGIN_SCREEN_ID) && USERNAME !== '') {
+    document.querySelectorAll(LOGIN_FORM_CREDENTIAL_FIELD_CLASSES)[0].value=USERNAME
+    document.querySelectorAll(LOGIN_FORM_CREDENTIAL_FIELD_CLASSES)[1].value=PASSWORD
+    document.getElementById(LOGIN_BUTTON_ID).click()
+  }
+
   const mainWindow = document.getElementById('mainframe').contentWindow
   if (!mainWindow) {
     return
@@ -499,4 +515,4 @@ setTimeout(() => {
     style.innerHTML = css.replace(/;/g, ' !important;').replace(/!prevent-important !important;/g, ';')
     head.appendChild(style)
   }
-}, 2000)
+}, 1000)

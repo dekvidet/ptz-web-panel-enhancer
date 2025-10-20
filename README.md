@@ -7,6 +7,7 @@ It was not tested with other Minrray products but it probably works with them as
 Some modifications might be necessary to the script for these untested products.
 
 ## Features
+- Instant login and redirect from the login page.
 - Improved CSS for better button colors and layout for easier mouse and touch operation.
 - Auto pan feature to continously move the camera left and right in a repeating manner with custom time delays.
 - Shortcuts for keyboard control:
@@ -24,3 +25,7 @@ Some modifications might be necessary to the script for these untested products.
 ## Installation
 1. Download Tampermonkey for [Firefox](https://addons.mozilla.org/hu/firefox/addon/tampermonkey) or [Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) based browsers (Chrome, Vivaldi, Opera, Brave, Edge).
 1. [Open the userscript source to install it!](https://raw.githubusercontent.com/dekvidet/ptz-web-panel-enhancer/main/script.user.js) (modern userscript engines provide an install and update system)
+
+## Configuration
+
+- If you want to enable the auto login feature then edit the userscript's source code and provide your credentials between the quotes in the ` const USERNAME=''` and `const PASSWORD=''` variables at the Configuration section.
