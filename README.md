@@ -28,4 +28,4 @@ Some modifications might be necessary to the script for these untested products.
 
 ## Configuration
 
-- If you want to enable the auto login feature then edit the userscript's source code and provide your credentials between the quotes in the ` const USERNAME=''` and `const PASSWORD=''` variables at the Configuration section.
+- If you want to enable the auto login feature then edit the userscript's source code and provide your credentials between the quotes in the ` const USERNAME = ''` and `const PASSWORD = ''` variables at the Configuration section.

@@ -15,6 +15,7 @@
 // ==/UserScript==
 
 // ============= CONFIGURATION ============= //
+// To enable auto login and redirect to the camera page, provide the PTZ admin site's credentials!
 const USERNAME = ''
 const PASSWORD = ''
 // ========================================= //
